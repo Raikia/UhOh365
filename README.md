@@ -22,7 +22,7 @@ The script is actually really basic and easy to use.  You make a file of the ema
                             Output file for valid emails only
                             
 ## Explanation
-This is actually a very easy thing to do.  It turns out the "/autodiscover/autodiscover.json/v1.0/{EMAIL}?Protocol=Autodiscoverv1" API endpoint returns different status codes for if an email exists in o365 or not.  200 status code means it exists, a 302 means it doesn't exist.
+This is actually a very easy thing to do.  It turns out the `/autodiscover/autodiscover.json/v1.0/{EMAIL}?Protocol=Autodiscoverv1` API endpoint returns different status codes for if an email exists in o365 or not.  200 status code means it exists, a 302 means it doesn't exist.
 
 If the email does exist:
 ![img](https://i.imgur.com/Ak88WKi.png)

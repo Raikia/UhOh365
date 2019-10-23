@@ -11,11 +11,14 @@ import queue
 import threading
 import time
 import requests
+import re
 
 
 email_queue = queue.Queue()
 print_queue = queue.Queue()
 args = None
+domain_is_o365 = {}
+domain_is_o365_lock = threading.Lock()
 
 def parse_args():
     parser = argparse.ArgumentParser(description="This script uses the autodiscover json API of office365 to enumerate valid o365 email accounts. This does not require any login attempts unlike other enumeration methods and therefore is very stealthy.")
@@ -32,11 +35,25 @@ def thread_worker(args):
     while not email_queue.empty():
         try:
             email = email_queue.get()
+            domain = email.split("@")[1]
+            if not domain in domain_is_o365.keys():
+                with domain_is_o365_lock:
+                    if not domain in domain_is_o365.keys():
+                        r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/thistotallydoesntexistasdfweroaer@{}?Protocol=Autodiscoverv1'.format(domain), headers=headers, verify=False, allow_redirects=False)                
+                        if 'outlook.office365.com' in r.text:
+                            domain_is_o365[domain] = True
+                        else:
+                            if args.verbose:
+                                print("It doesn't look like '{}' uses o365".format(domain))
+                            domain_is_o365[domain] = False
             r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}?Protocol=Autodiscoverv1'.format(email), headers=headers, verify=False, allow_redirects=False)
             if r.status_code == 200:
                 print("VALID: ", email)
                 if args.output is not None:
                     print_queue.put(email)
+            elif r.status_code == 302:
+                if domain_is_o365[domain] and not 'outlook.office365.com' in r.text:
+                    print("VALID: ", email)
             else:
                 if args.verbose:
                     print("INVALID: ", email)
