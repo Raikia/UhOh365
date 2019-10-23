@@ -11,6 +11,7 @@ import queue
 import threading
 import time
 import requests
+import re
 
 
 email_queue = queue.Queue()
@@ -37,6 +38,9 @@ def thread_worker(args):
                 print("VALID: ", email)
                 if args.output is not None:
                     print_queue.put(email)
+            elif r.status_code == 302:
+                if not 'https://outlook.office365.com' in r.text:
+                    print("VALID: ", email)
             else:
                 if args.verbose:
                     print("INVALID: ", email)
