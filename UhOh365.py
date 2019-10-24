@@ -54,6 +54,8 @@ def thread_worker(args):
             elif r.status_code == 302:
                 if domain_is_o365[domain] and not 'outlook.office365.com' in r.text:
                     print("VALID: ", email)
+                    if args.output is not None:
+                        print_queue.put(email)
             else:
                 if args.verbose:
                     print("INVALID: ", email)
