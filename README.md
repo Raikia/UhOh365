@@ -20,6 +20,10 @@ The script is actually really basic and easy to use.  You make a file of the ema
                             Number of threads to run with. Default is 20
       -o OUTPUT, --output OUTPUT
                             Output file for valid emails only
+      -n, --nossl           Turn off SSL verification. This can increase speed if
+                            needed
+      -p PROXY, --proxy PROXY
+                            Specify a proxy to run this through (eg: 'http://127.0.0.1:8080')
                             
 ## Explanation
 This is actually a very easy thing to do.  It turns out the `/autodiscover/autodiscover.json/v1.0/{EMAIL}?Protocol=Autodiscoverv1` API endpoint returns different status codes for if an email exists in o365 or not.  200 status code means it exists, a 302 means it doesn't exist.
