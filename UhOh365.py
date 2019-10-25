@@ -20,7 +20,6 @@ print_queue = queue.Queue()
 args = None
 domain_is_o365 = {}
 domain_is_o365_lock = threading.Lock()
-ssl_verify = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description="This script uses the autodiscover json API of office365 to enumerate valid o365 email accounts. This does not require any login attempts unlike other enumeration methods and therefore is very stealthy.")
@@ -28,12 +27,20 @@ def parse_args():
     parser.add_argument("-v", "--verbose", help="Display each result as valid/invalid. By default only displays valid", action="store_true")
     parser.add_argument("-t", "--threads", help="Number of threads to run with. Default is 20", type=int, default=20)
     parser.add_argument("-o", "--output", help="Output file for valid emails only", type=argparse.FileType('w'))
+    parser.add_argument("-n", "--nossl", help="Turn off SSL verification. This can increase speed if needed", action="store_false")
+    parser.add_argument("-p", "--proxy", help="Specify a proxy to run this through (eg: 'http://127.0.0.1:8080')")
 
     return parser.parse_args()
 
 def thread_worker(args):
     user_agent = 'Microsoft Office/16.0 (Windows NT 10.0; Microsoft Outlook 16.0.12026; Pro)'
     headers = {'User-Agent': user_agent, 'Accept': 'application/json'}
+    proxies = {}
+    if args.proxy is not None:
+        proxies = {
+                "http": args.proxy,
+                "https": args.proxy
+        }
     while not email_queue.empty():
         try:
             email = email_queue.get()
@@ -42,14 +49,14 @@ def thread_worker(args):
                 with domain_is_o365_lock:
                     if domain not in domain_is_o365.keys():
                         junk_user = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(20))
-                        r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}@{}?Protocol=Autodiscoverv1'.format(junk_user, domain), headers=headers, verify=ssl_verify, allow_redirects=False)
+                        r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}@{}?Protocol=Autodiscoverv1'.format(junk_user, domain), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
                         if 'outlook.office365.com' in r.text:
                             domain_is_o365[domain] = True
                         else:
                             if args.verbose:
                                 print("It doesn't look like '{}' uses o365".format(domain))
                             domain_is_o365[domain] = False
-            r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}?Protocol=Autodiscoverv1'.format(email), headers=headers, verify=ssl_verify, allow_redirects=False)
+            r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}?Protocol=Autodiscoverv1'.format(email), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
             if r.status_code == 200:
                 print("VALID: ", email)
                 if args.output is not None:
@@ -62,6 +69,8 @@ def thread_worker(args):
             else:
                 if args.verbose:
                     print("INVALID: ", email)
+        except requests.exceptions.SSLError as e:
+            print("SSL ERROR: If you are running through a proxy, you probably want to use '-n' to disable SSL verification")
         except Exception as e:
             print("ERROR: ", e)
 
