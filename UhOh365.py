@@ -57,7 +57,7 @@ def thread_worker(args):
                                 print("It doesn't look like '{}' uses o365".format(domain))
                             domain_is_o365[domain] = False
             r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}?Protocol=Autodiscoverv1'.format(email), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
-            if r.status_code == 200:
+            if r.status_code == 200 and "X-MailboxGuid" in r.headers.keys():
                 print("VALID: ", email)
                 if args.output is not None:
                     print_queue.put(email)
