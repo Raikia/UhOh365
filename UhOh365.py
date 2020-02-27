@@ -81,6 +81,7 @@ def print_worker(args):
             if toPrint == 'done':
                 return
             args.output.write(toPrint + "\n")
+            args.output.flush()
 
 
 def main():
