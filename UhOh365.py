@@ -43,7 +43,7 @@ def thread_worker(args):
         }
     while not email_queue.empty():
         try:
-            email = email_queue.get()
+            email = email_queue.get(False)
             domain = email.split("@")[1]
             if domain not in domain_is_o365.keys():
                 with domain_is_o365_lock:
@@ -71,8 +71,11 @@ def thread_worker(args):
                     print("INVALID: ", email)
         except requests.exceptions.SSLError as e:
             print("SSL ERROR: If you are running through a proxy, you probably want to use '-n' to disable SSL verification")
+        except queue.Empty as e:
+            return
         except Exception as e:
             print("ERROR: ", e)
+        time.sleep(0.01)
 
 def print_worker(args):
     if args.output is not None:
