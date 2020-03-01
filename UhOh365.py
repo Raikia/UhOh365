@@ -21,16 +21,24 @@ args = None
 domain_is_o365 = {}
 domain_is_o365_lock = threading.Lock()
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="This script uses the autodiscover json API of office365 to enumerate valid o365 email accounts. This does not require any login attempts unlike other enumeration methods and therefore is very stealthy.")
+    parser = argparse.ArgumentParser(description="This script uses the autodiscover json API of office365 to enumerate "
+                                                 "valid o365 email accounts. This does not require any login attempts "
+                                                 "unlike other enumeration methods and therefore is very stealthy.")
     parser.add_argument("file", type=argparse.FileType('r'), help="Input file containing one email per line")
-    parser.add_argument("-v", "--verbose", help="Display each result as valid/invalid. By default only displays valid", action="store_true")
+    parser.add_argument("-s", "--suffix", help="Add a domain suffix to every input line from file (e.g: contoso.com)",
+                        default=None)
+    parser.add_argument("-v", "--verbose", help="Display each result as valid/invalid. By default only displays valid",
+                        action="store_true")
     parser.add_argument("-t", "--threads", help="Number of threads to run with. Default is 20", type=int, default=20)
     parser.add_argument("-o", "--output", help="Output file for valid emails only", type=argparse.FileType('w'))
-    parser.add_argument("-n", "--nossl", help="Turn off SSL verification. This can increase speed if needed", action="store_false")
+    parser.add_argument("-n", "--nossl", help="Turn off SSL verification. This can increase speed if needed",
+                        action="store_false")
     parser.add_argument("-p", "--proxy", help="Specify a proxy to run this through (eg: 'http://127.0.0.1:8080')")
 
     return parser.parse_args()
+
 
 def thread_worker(args):
     user_agent = 'Microsoft Office/16.0 (Windows NT 10.0; Microsoft Outlook 16.0.12026; Pro)'
@@ -70,12 +78,15 @@ def thread_worker(args):
                 if args.verbose:
                     print("INVALID: ", email)
         except requests.exceptions.SSLError as e:
-            print("SSL ERROR: If you are running through a proxy, you probably want to use '-n' to disable SSL verification")
+            print("SSL ERROR: If you are running through a proxy, "
+                  "you probably want to use '-n' to disable SSL verification")
         except queue.Empty as e:
             return
+
         except Exception as e:
             print("ERROR: ", e)
         time.sleep(0.01)
+
 
 def print_worker(args):
     if args.output is not None:
@@ -98,6 +109,10 @@ def main():
     args = parse_args()
     with args.file as emailFile:
         for line in emailFile:
+            if args.suffix:
+                line = line.strip()+"@"+str(args.suffix).replace("@", "")
+            else:
+                line = line.strip()
             if '@' in line:
                 email_queue.put(line.strip())
 
@@ -120,6 +135,7 @@ def main():
     print_thread.join()
 
     print("Done!  Total execution time: ", time.perf_counter() - start, " seconds")
+
 
 if __name__ == "__main__":
     main()
