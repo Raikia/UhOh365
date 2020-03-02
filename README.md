@@ -6,7 +6,7 @@ Microsoft does not consider "email enumeration" a vulnerability, so this is taki
 This script allows for email validation with **zero login attempts** and only uses Microsoft's built-in Autodiscover API so it is invisible to the person/company who owns the email address.  Furthermore, this API call appears to be completely unthrottled and I was able to validate over 2,000 email addresses within 1 minute in my testing.
 
 ## Usage
-The script is actually really basic and easy to use.  You make a file of the emails you want to see are valid or not and pass it as an argument to the script:
+The script is actually really basic and easy to use.  You make a file of the emails you want to see are valid or not and pass it as an argument to the script.  Or you can provide a file just of usernames and give the -s argument to automatically append a suffix to each entry:
 
     Usage: UhOh365.py [-h] [-v] [-t THREADS] [-o OUTPUT] file
     
@@ -16,6 +16,7 @@ The script is actually really basic and easy to use.  You make a file of the ema
     optional arguments:
       -h, --help            show this help message and exit
       -v, --verbose         Display each result as valid/invalid. By default only displays valid
+      -s, --suffix	    Add a domain suffix to every input line from file (e.g: contoso.com)
       -t THREADS, --threads THREADS
                             Number of threads to run with. Default is 20
       -o OUTPUT, --output OUTPUT
